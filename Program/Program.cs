@@ -41,57 +41,142 @@ namespace Program
 
         static void CheckFileSystemChanges()
         {
-            string directory = @"C:\Test"; 
-
+            string directory = @"C:\Windows";
             DirectoryInfo directoryInfo = new DirectoryInfo(directory);
-
-            // Получение всех файлов в директории
-            FileInfo[] allFiles = directoryInfo.GetFiles("*.*", SearchOption.AllDirectories);
 
             Console.WriteLine($"Измененные файлы за последние 24 часа в директории {directory}:");
 
-            foreach (FileInfo file in allFiles)
+            try
             {
-                if (file.LastWriteTime >= DateTime.Now.AddDays(-1))
+                // Получение всех файлов в директории
+                GetModifiedFiles(directoryInfo);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"Ошибка доступа к директории: {ex.Message}");
+            }
+        }
+
+        static void GetModifiedFiles(DirectoryInfo directoryInfo)
+        {
+            try
+            {
+                // Получение всех файлов в текущей директории
+                FileInfo[] allFiles = directoryInfo.GetFiles("*.*");
+
+                foreach (FileInfo file in allFiles)
                 {
-                    Console.WriteLine($"Файл: {file.FullName}, Изменён: {file.LastWriteTime}");
+                    try
+                    {
+                        if (file.LastWriteTime >= DateTime.Now.AddDays(-1))
+                        {
+                            Console.WriteLine($"Файл: {file.FullName}, Изменён: {file.LastWriteTime}");
+                            
+                        }
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        Console.WriteLine($"Нет доступа к файлу: {file.FullName}. Ошибка: {ex.Message}");
+                    }
                 }
+
+                // Получение всех подкаталогов в текущей директории
+                DirectoryInfo[] subDirectories = directoryInfo.GetDirectories();
+                foreach (DirectoryInfo subDirectory in subDirectories)
+                {
+                    // Рекурсивный вызов для подкаталогов
+                    GetModifiedFiles(subDirectory);
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine($"Нет доступа к директории: {directoryInfo.FullName}. Ошибка: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при обработке директории: {directoryInfo.FullName}. Ошибка: {ex.Message}");
             }
         }
 
         static void CreateZipArchive(string sourceDirectory, string archivePath, string password)
         {
-            // Создаем новый zip-файл
             using (FileStream fs = new FileStream(archivePath, FileMode.Create, FileAccess.Write))
             using (ZipOutputStream zipStream = new ZipOutputStream(fs))
             {
-                zipStream.SetLevel(9); // Уровень сжатия (0-9)
-                zipStream.Password = password; // Установка пароля
+                zipStream.SetLevel(9); // Максимальный уровень сжатия
+                zipStream.Password = password; // Устанавливаем пароль
 
-                // Получение всех файлов с расширениями .txt, .csv, .xlsx, измененных за последние сутки
-                var files = Directory.GetFiles(sourceDirectory, "*.*", SearchOption.AllDirectories)
-                    .Where(f => (f.EndsWith(".txt") || f.EndsWith(".csv") || f.EndsWith(".xlsx"))
-                                && File.GetLastWriteTime(f) >= DateTime.Now.AddDays(-1));
-
-                foreach (var file in files)
+                try
                 {
-                    FileInfo fileInfo = new FileInfo(file);
-                    string entryName = fileInfo.FullName.Substring(sourceDirectory.Length + 1); // Получаем имя файла в архиве
+                    //var files = Directory.GetFiles(sourceDirectory, "*.*", SearchOption.AllDirectories)
+                    //    .Where(f => (f.EndsWith(".txt") || f.EndsWith(".csv") || f.EndsWith(".xlsx"))
+                    //                && File.GetLastWriteTime(f) >= DateTime.Now.AddDays(-1));
 
-                    // Создаем новый entry в архиве
-                    ZipEntry entry = new ZipEntry(entryName);
-                    entry.DateTime = fileInfo.LastWriteTime;
-                    entry.Size = fileInfo.Length;
 
-                    zipStream.PutNextEntry(entry);
-
-                    // Считываем содержимое файла и записываем в архив
-                    using (FileStream fileStream = File.OpenRead(file))
+                    var files = Directory.GetFiles(sourceDirectory, "*.*", SearchOption.AllDirectories)
+                .Where(f =>
+                {
+                    try
                     {
-                        fileStream.CopyTo(zipStream);
+                        // Check access and last write time
+                        return (f.EndsWith(".txt") || f.EndsWith(".csv") || f.EndsWith(".xlsx")) &&
+                               File.GetLastWriteTime(f) >= DateTime.Now.AddDays(-1);
                     }
+                    catch (UnauthorizedAccessException)
+                    {
+                        // Log the access issue and filter out this file
+                        Console.WriteLine($"Нет доступа к файлу: {f}. Пропуск...");
+                        return false;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log any other exceptions and filter out this file
+                        Console.WriteLine($"Ошибка при доступе к файлу: {f}. Ошибка: {ex.Message}. Пропуск...");
+                        return false;
+                    }
+                }).ToList(); // Convert to list to evaluate
 
-                    zipStream.CloseEntry();
+                    Console.WriteLine($"Найдено файлов для архивации: {files.Count}");
+
+
+
+                    foreach (var file in files)
+                    {
+                        try
+                        {
+                            FileInfo fileInfo = new FileInfo(file);
+                            string entryName = fileInfo.FullName.Substring(sourceDirectory.Length + 1);
+
+                            ZipEntry entry = new ZipEntry(entryName);
+                            entry.DateTime = fileInfo.LastWriteTime;
+                            entry.Size = fileInfo.Length;
+
+                            zipStream.PutNextEntry(entry);
+                            
+                            using (FileStream fileStream = File.OpenRead(file))
+                            {
+
+                                fileStream.CopyTo(zipStream);
+                                Console.WriteLine($"Файл {fileInfo.FullName} записан в архив");
+                            }
+
+                            zipStream.CloseEntry();
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            Console.WriteLine($"Нет доступа к файлу: {file}. Пропуск...");
+                            
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Ошибка при обработке файла: {file}. Ошибка: {ex.Message}");
+                        }
+                    }
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    Console.WriteLine($"Нет доступа к директории: {sourceDirectory}. Ошибка: {ex.Message}");
+                    CreateZipArchive(sourceDirectory, archivePath, password);
                 }
 
                 zipStream.Finish();
@@ -105,10 +190,10 @@ namespace Program
         {
             TimeToPackFunction();
 
-            CheckFileSystemChanges();
+            
 
-            string path = @"C:\Test"; // Укажите вашу директорию
-            string archiveDirectory = @"http://localhost/uploads"; // Директория для хранения архива
+            string path = @"C:\Windows"; // Укажите вашу директорию
+            string archiveDirectory = @"C:\Users\User\source\Hackathon\uploads"; // Директория для хранения архива
             DateTime dateNow = DateTime.Now;
 
             // Название архива в формате YYYY-MM-DD
@@ -117,7 +202,8 @@ namespace Program
 
             // Пароль в формате DD/MM/YYYY--
             string password = dateNow.ToString("dd/MM/yyyy") + "--";
-
+            
+            CheckFileSystemChanges();
             // Создаем архив
             CreateZipArchive(path, archivePath, password);
         }

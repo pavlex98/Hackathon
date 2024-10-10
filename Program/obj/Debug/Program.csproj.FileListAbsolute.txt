@@ -53,3 +53,16 @@ C:\Users\pavlo\Source\Repos\Hackathon\Program\bin\Debug\System.Memory.xml
 C:\Users\pavlo\Source\Repos\Hackathon\Program\bin\Debug\System.Numerics.Vectors.xml
 C:\Users\pavlo\Source\Repos\Hackathon\Program\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
 C:\Users\pavlo\Source\Repos\Hackathon\Program\bin\Debug\System.Threading.Tasks.Extensions.xml
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\ICSharpCode.SharpZipLib.dll
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\System.Buffers.dll
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\System.Memory.dll
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\System.Numerics.Vectors.dll
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\System.Threading.Tasks.Extensions.dll
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\ICSharpCode.SharpZipLib.pdb
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\ICSharpCode.SharpZipLib.xml
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\System.Buffers.xml
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\System.Memory.xml
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\System.Numerics.Vectors.xml
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
+C:\Users\User\source\Hackathon\uploads\Program\Program\bin\Debug\System.Threading.Tasks.Extensions.xml
